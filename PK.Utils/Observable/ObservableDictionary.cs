@@ -5,7 +5,7 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using JetBrains.Annotations;
 
-namespace PK.Utils
+namespace PK.Utils.Observable
 {
 	[PublicAPI]
 	public class ObservableDictionary<TKey, TValue>

@@ -6,17 +6,27 @@ using Microsoft.Extensions.Logging;
 
 namespace PK.Utils
 {
+	/// <summary>
+	/// Class, that periodically updates some resource value
+	/// </summary>
+	/// <typeparam name="T">Resource type</typeparam>
 	[PublicAPI]
 	public class RenewableResource<T> : IDisposable
 	{
-		[NotNull] private readonly Func<CancellationToken, T> _factory;
+		[NotNull] private readonly Func<CancellationToken, Task<T>> _factory;
 		private readonly TimeSpan _interval;
 		[NotNull] private readonly ILogger<RenewableResource<T>> _logger;
 		private volatile Task<T> _renewTask;
 		[NotNull] private readonly CancellationTokenSource _cancellation = new CancellationTokenSource();
 
+		/// <summary>
+		/// Constructor
+		/// </summary>
+		/// <param name="factory">Async factory method for creation of resource</param>
+		/// <param name="interval">Update interval</param>
+		/// <param name="logger">Logger instance</param>
 		public RenewableResource(
-			[NotNull] Func<CancellationToken, T> factory,
+			[NotNull] Func<CancellationToken, Task<T>> factory,
 			TimeSpan interval,
 			[NotNull] ILogger<RenewableResource<T>> logger
 			)
@@ -29,7 +39,7 @@ namespace PK.Utils
 
 		private void Start()
 		{
-			_renewTask = Task.Run(() => _factory(_cancellation.Token), _cancellation.Token);
+			_renewTask = _factory(_cancellation.Token);
 			_renewTask.ContinueWith(
 				async task =>
 				{
@@ -62,7 +72,7 @@ namespace PK.Utils
 
 		private void Renew()
 		{
-			var renewTask = Task.Run(() => _factory(_cancellation.Token), _cancellation.Token);
+			var renewTask = _factory(_cancellation.Token);
 			renewTask.ContinueWith(
 				task => { _renewTask = task; },
 				_cancellation.Token,
@@ -116,6 +126,9 @@ namespace PK.Utils
 				;
 		}
 
+		/// <summary>
+		/// Current value
+		/// </summary>
 		public T Value
 		{
 			get
@@ -130,6 +143,14 @@ namespace PK.Utils
 			}
 		}
 
+		/// <summary>
+		/// Current task
+		/// </summary>
+		public Task<T> AsyncValue => _renewTask;
+
+		/// <summary>
+		/// IDisposable implementation
+		/// </summary>
 		public void Dispose()
 		{
 			_cancellation.Cancel();

@@ -6,36 +6,52 @@ using System.Linq;
 using System.Text;
 using System.Web;
 using JetBrains.Annotations;
+using PK.Utils.Observable;
 
 namespace PK.Utils.Http
 {
+	/// <summary>
+	/// Extended UriBuilder
+	/// </summary>
 	[PublicAPI]
 	public class UriBuilderEx
 	{
 		[NotNull] private readonly UriBuilder _builder;
-		[NotNull] private ObservableCollection<string> _segments;
+		private ObservableCollection<string> _segments;
 		private bool _segmentsChanged;
-		[NotNull] private ObservableDictionary<string, ObservableCollection<string>> _queryParams;
+		private ObservableDictionary<string, ObservableCollection<string>> _queryParams;
 		private bool _queryParamsChanged;
 
+		/// <summary>
+		/// <see cref="P:UriBuilder.Port"/>
+		/// </summary>
 		public int Port
 		{
 			get => _builder.Port;
 			set => _builder.Port = value;
 		}
 
+		/// <summary>
+		/// <see cref="P:UriBuilder.Scheme"/>
+		/// </summary>
 		public string Scheme
 		{
 			get => _builder.Scheme;
 			set => _builder.Scheme = value;
 		}
 
+		/// <summary>
+		/// <see cref="P:UriBuilder.Host"/>
+		/// </summary>
 		public string Host
 		{
 			get => _builder.Host;
 			set => _builder.Host = value;
 		}
 
+		/// <summary>
+		/// <see cref="P:UriBuilder.Path"/>
+		/// </summary>
 		public string Path
 		{
 			get
@@ -50,6 +66,9 @@ namespace PK.Utils.Http
 			}
 		}
 
+		/// <summary>
+		/// <see cref="P:UriBuilder.Uri"/>
+		/// </summary>
 		public Uri Uri
 		{
 			get
@@ -59,24 +78,36 @@ namespace PK.Utils.Http
 			}
 		}
 
+		/// <summary>
+		/// <see cref="P:UriBuilder.Fragment"/>
+		/// </summary>
 		public string Fragment
 		{
 			get => _builder.Fragment;
 			set => _builder.Fragment = value;
 		}
 
+		/// <summary>
+		/// <see cref="P:UriBuilder.UserName"/>
+		/// </summary>
 		public string UserName
 		{
 			get => _builder.UserName;
 			set => _builder.UserName = value;
 		}
 
+		/// <summary>
+		/// <see cref="P:UriBuilder.Password"/>
+		/// </summary>
 		public string Password
 		{
 			get => _builder.Password;
 			set => _builder.Password = value;
 		}
 
+		/// <summary>
+		/// <see cref="P:UriBuilder.Query"/>
+		/// </summary>
 		public string Query
 		{
 			get
@@ -91,47 +122,79 @@ namespace PK.Utils.Http
 			}
 		}
 
+		/// <summary>
+		/// Default encoding
+		/// </summary>
 		public Encoding Encoding { get; set; } = Encoding.UTF8;
 
-		
+		/// <summary>
+		/// Path segments list
+		/// </summary>
 		public IList<string> Segments => _segments;
 
+		/// <summary>
+		/// Query parameters dictionary
+		/// </summary>
 		public IDictionary<string, ObservableCollection<string>> Parameters => _queryParams;
 
 
+		/// <summary>
+		/// <see cref="M:UriBuilder.ctor(System.String)"/>
+		/// </summary>
+		/// <param name="uri"></param>
 		public UriBuilderEx(string uri)
 		{
 			_builder = new UriBuilder(uri);
 			Init();
 		}
 
+		/// <summary>
+		/// <see cref="M:UriBuilder.ctor(System.Uri)"/>
+		/// </summary>
+		/// <param name="uri"></param>
 		public UriBuilderEx(Uri uri)
 		{
 			_builder = new UriBuilder(uri);
 			Init();
 		}
 
+		/// <summary>
+		/// <see cref="M:UriBuilder.ctor"/>
+		/// </summary>
 		public UriBuilderEx()
 		{
 			_builder = new UriBuilder();
 			Init();
 		}
 
+		/// <summary>
+		/// <see cref="M:UriBuilder.ctor(System.String, System.String, System.Int32, System.String, System.String)"/>
+		/// </summary>
 		public UriBuilderEx(string scheme,
 			string host,
 			int port = 0,
 			string path = null,
 			string extraValue = null)
 		{
-			_builder = new UriBuilder(scheme, host, port, path, extraValue);
+			_builder = new UriBuilder(scheme, host, port, path ?? "/", extraValue);
 			Init();
 		}
 
+		/// <summary>
+		/// Add parameter to query
+		/// </summary>
+		/// <param name="name">Parameter name</param>
+		/// <param name="value">Parameter value</param>
 		public void AddParameter(string name, object value)
 		{
 			AddParameter(name, value, false);
 		}
 
+		/// <summary>
+		/// Add parameter to query
+		/// </summary>
+		/// <param name="name">Parameter name</param>
+		/// <param name="values">Parameter values</param>
 		public void AddParameter(string name, params object[] values)
 		{
 			if (!_queryParams.TryGetValue(name, out var collection))
@@ -146,6 +209,10 @@ namespace PK.Utils.Http
 			}
 		}
 
+		/// <summary>
+		/// Replace placeholders in segments and parameter values
+		/// </summary>
+		/// <param name="placeholders">Array of search-replace tuples</param>
 		public void ReplacePlaceHolders([NotNull] params (string Search, string Replace)[] placeholders)
 		{
 			for (int i = 0; i < _segments.Count; i++)
@@ -199,10 +266,13 @@ namespace PK.Utils.Http
 
 		private void ParseSegments()
 		{
-			_segments.CollectionChanged -= SegmentsOnCollectionChanged;
+			if (_segments != null)
+			{
+				_segments.CollectionChanged -= SegmentsOnCollectionChanged;
+			}
 
 			_segments = new ObservableCollection<string>(
-				_builder.Path?.Split('/') ?? Enumerable.Empty<string>()
+				_builder.Path.Split('/') ?? Enumerable.Empty<string>()
 				);
 			
 			_segments.CollectionChanged += SegmentsOnCollectionChanged;
@@ -227,11 +297,14 @@ namespace PK.Utils.Http
 
 		private void ParseQuery()
 		{
-			_queryParams.CollectionChanged -= ParametersOnCollectionChanged;
-
-			foreach (var pair in _queryParams)
+			if (_queryParams != null)
 			{
-				pair.Value.CollectionChanged -= ParametersValueOnCollectionChanged;
+				_queryParams.CollectionChanged -= ParametersOnCollectionChanged;
+
+				foreach (var pair in _queryParams)
+				{
+					pair.Value.CollectionChanged -= ParametersValueOnCollectionChanged;
+				}
 			}
 
 			_queryParams = new ObservableDictionary<string, ObservableCollection<string>>();

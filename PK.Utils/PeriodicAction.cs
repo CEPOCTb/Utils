@@ -6,16 +6,25 @@ using Microsoft.Extensions.Logging;
 
 namespace PK.Utils
 {
+	/// <summary>
+	/// Periodic action wrapper
+	/// </summary>
 	[PublicAPI]
 	public class PeriodicAction : IDisposable
 	{
-		[NotNull] private readonly Action<CancellationToken> _action;
+		[NotNull] private readonly Func<CancellationToken, Task> _action;
 		private readonly TimeSpan _interval;
 		[NotNull] private readonly ILogger<PeriodicAction> _logger;
 		private volatile Task _task;
 		[NotNull] private readonly CancellationTokenSource _cancellation = new CancellationTokenSource();
 
-		public PeriodicAction([NotNull] Action<CancellationToken> action, TimeSpan interval, [NotNull] ILogger<PeriodicAction> logger)
+		/// <summary>
+		/// Constructor
+		/// </summary>
+		/// <param name="action">Async action</param>
+		/// <param name="interval">Repeat interval</param>
+		/// <param name="logger">Logger instance</param>
+		public PeriodicAction([NotNull] Func<CancellationToken, Task> action, TimeSpan interval, [NotNull] ILogger<PeriodicAction> logger)
 		{
 			_action = action ?? throw new ArgumentNullException(nameof(action));
 			_interval = interval;
@@ -25,7 +34,7 @@ namespace PK.Utils
 
 		private void Start()
 		{
-			_task = Task.Run(() => _action(_cancellation.Token), _cancellation.Token);
+			_task = _action(_cancellation.Token);
 			_task.ContinueWith(
 				async task =>
 				{
@@ -58,7 +67,7 @@ namespace PK.Utils
 
 		private void Renew()
 		{
-			var renewTask = Task.Run(() => _action(_cancellation.Token), _cancellation.Token);
+			var renewTask = _action(_cancellation.Token);
 			renewTask.ContinueWith(
 				task => { _task = task; },
 				_cancellation.Token,
@@ -111,6 +120,9 @@ namespace PK.Utils
 					);
 		}
 
+		/// <summary>
+		/// IDisposable implementation
+		/// </summary>
 		public void Dispose()
 		{
 			_cancellation.Cancel();
