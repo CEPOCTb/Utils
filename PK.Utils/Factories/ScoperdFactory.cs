@@ -10,7 +10,7 @@ namespace PK.Utils.Factories
 	public static class ScopedFactory
 	{
 		/// <summary>
-		/// Helper for creation of scoped factory 
+		/// Helper for creation of scoped factory
 		/// </summary>
 		/// <param name="scopeFactory">Scope factory method</param>
 		/// <param name="factory">Value factory method</param>
@@ -19,12 +19,13 @@ namespace PK.Utils.Factories
 		/// <returns>Factory</returns>
 		public static ScopedFactory<T, TScope> CreateFactory<T, TScope>(
 			[NotNull] Func<TScope> scopeFactory,
-			[NotNull] Func<TScope, T> factory)
+			[NotNull] Func<TScope, T> factory
+			)
 			where TScope : class, IDisposable
 			=> new ScopedFactory<T, TScope>(scopeFactory, factory);
 
 		/// <summary>
-		/// Helper for creation of scoped factory 
+		/// Helper for creation of scoped factory
 		/// </summary>
 		/// <param name="scopeFactory">Scope factory method</param>
 		/// <param name="factory">Value factory method</param>
@@ -34,12 +35,12 @@ namespace PK.Utils.Factories
 		/// <returns>Factory</returns>
 		public static ScopedFactory<T, TParam, TScope> CreateFactory<T, TParam, TScope>(
 			[NotNull] Func<TScope> scopeFactory,
-			[NotNull] Func<TScope, TParam, T> factory)
+			[NotNull] Func<TScope, TParam, T> factory
+			)
 			where TScope : class, IDisposable
 			=> new ScopedFactory<T, TParam, TScope>(scopeFactory, factory);
-		
 	}
-	
+
 	/// <summary>
 	/// Factory for creation of scoped value
 	/// </summary>
@@ -110,5 +111,4 @@ namespace PK.Utils.Factories
 
 		#endregion
 	}
-
 }

@@ -34,7 +34,7 @@ namespace PK.Utils.Factories
 			Value = value;
 			_disposable = scope;
 		}
-		
+
 		#region Implementation of IScopedValue<out T>
 
 		/// <inheritdoc />

@@ -24,7 +24,11 @@ namespace PK.Utils
 		/// <param name="action">Async action</param>
 		/// <param name="interval">Repeat interval</param>
 		/// <param name="logger">Logger instance</param>
-		public PeriodicAction([NotNull] Func<CancellationToken, Task> action, TimeSpan interval, [NotNull] ILogger<PeriodicAction> logger)
+		public PeriodicAction(
+			[NotNull] Func<CancellationToken, Task> action,
+			TimeSpan interval,
+			[NotNull] ILogger<PeriodicAction> logger
+			)
 		{
 			_action = action ?? throw new ArgumentNullException(nameof(action));
 			_interval = interval;

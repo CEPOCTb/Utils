@@ -202,31 +202,25 @@ namespace PK.Utils.Synchronization
 		/// <summary>
 		/// <see cref="M:System.Threading.ManualResetEventSlim.Wait"/>
 		/// </summary>
-		public void Wait()
-		{
-			Wait(Timeout.Infinite, CancellationToken.None);
-		}
+		public void Wait() => Wait(Timeout.Infinite, CancellationToken.None);
 
 		/// <summary>
 		/// <see cref="M:System.Threading.ManualResetEventSlim.Wait(System.Threading.CancellationToken)"/>
 		/// </summary>
-		public void Wait(CancellationToken token)
-		{
-			Wait(Timeout.Infinite, token);
-		}
+		public void Wait(CancellationToken token) => Wait(Timeout.Infinite, token);
 
 		/// <summary>
 		/// <see cref="M:System.Threading.ManualResetEventSlim.Wait(System.TimeSpan)"/>
 		/// </summary>
 		public bool Wait(TimeSpan timeout)
 		{
-			var ms = (long) timeout.TotalMilliseconds;
+			var ms = (long)timeout.TotalMilliseconds;
 			if (ms < -1 || ms > int.MaxValue)
 			{
 				throw new ArgumentOutOfRangeException(nameof(timeout));
 			}
 
-			return Wait((int) ms, CancellationToken.None);
+			return Wait((int)ms, CancellationToken.None);
 		}
 
 		/// <summary>
@@ -234,22 +228,19 @@ namespace PK.Utils.Synchronization
 		/// </summary>
 		public bool Wait(TimeSpan timeout, CancellationToken token)
 		{
-			var ms = (long) timeout.TotalMilliseconds;
+			var ms = (long)timeout.TotalMilliseconds;
 			if (ms < -1 || ms > int.MaxValue)
 			{
 				throw new ArgumentOutOfRangeException(nameof(timeout));
 			}
 
-			return Wait((int) ms, token);
+			return Wait((int)ms, token);
 		}
 
 		/// <summary>
 		/// <see cref="M:System.Threading.ManualResetEventSlim.Wait(System.Int32)"/>
 		/// </summary>
-		public bool Wait(int timeout)
-		{
-			return Wait(timeout, CancellationToken.None);
-		}
+		public bool Wait(int timeout) => Wait(timeout, CancellationToken.None);
 
 		/// <summary>
 		/// <see cref="M:System.Threading.ManualResetEventSlim.Wait(System.Int32,System.Threading.CancellationToken)"/>

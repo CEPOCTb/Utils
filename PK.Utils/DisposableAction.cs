@@ -15,16 +15,10 @@ namespace PK.Utils
 		/// Constructor
 		/// </summary>
 		/// <param name="action">Action to execute on dispose</param>
-		public DisposableAction([NotNull] Action action)
-		{
+		public DisposableAction([NotNull] Action action) =>
 			_action = action ?? throw new ArgumentNullException(nameof(action));
-		}
 
 		/// <inheritdoc />
-		public void Dispose()
-		{
-			_action.Invoke();
-		}
-
+		public void Dispose() => _action.Invoke();
 	}
 }

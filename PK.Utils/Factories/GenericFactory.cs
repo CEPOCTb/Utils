@@ -16,18 +16,13 @@ namespace PK.Utils.Factories
 		/// Constructor
 		/// </summary>
 		/// <param name="factoryMethod">Factory method, that creates an object of type <typeparamref name="T"/></param>
-		public GenericFactory([NotNull] Func<T> factoryMethod)
-		{
+		public GenericFactory([NotNull] Func<T> factoryMethod) =>
 			_factoryMethod = factoryMethod ?? throw new ArgumentNullException(nameof(factoryMethod));
-		}
 
 		#region Implementation of IAbstractFactory<out T>
 
 		/// <inheritdoc />
-		public T Create()
-		{
-			return _factoryMethod();
-		}
+		public T Create() => _factoryMethod();
 
 		#endregion
 	}
@@ -46,18 +41,13 @@ namespace PK.Utils.Factories
 		/// Constructor
 		/// </summary>
 		/// <param name="factoryMethod">Factory method, that creates an object of type <typeparamref name="T"/></param>
-		public GenericFactory([NotNull] Func<TParam, T> factoryMethod)
-		{
-			_factoryMethod = factoryMethod ?? throw new ArgumentNullException(nameof(factoryMethod));
-		}
+		public GenericFactory([NotNull] Func<TParam, T> factoryMethod) => _factoryMethod =
+			factoryMethod ?? throw new ArgumentNullException(nameof(factoryMethod));
 
 		#region Implementation of IAbstractFactory<out T>
 
 		/// <inheritdoc />
-		public T Create(TParam param)
-		{
-			return _factoryMethod(param);
-		}
+		public T Create(TParam param) => _factoryMethod(param);
 
 		#endregion
 	}

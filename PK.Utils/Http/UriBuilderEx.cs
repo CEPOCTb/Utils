@@ -170,13 +170,20 @@ namespace PK.Utils.Http
 		/// <summary>
 		/// <see cref="M:UriBuilder.ctor(System.String, System.String, System.Int32, System.String, System.String)"/>
 		/// </summary>
-		public UriBuilderEx(string scheme,
+		public UriBuilderEx(
+			string scheme,
 			string host,
 			int port = 0,
 			string path = null,
-			string extraValue = null)
+			string extraValue = null
+			)
 		{
-			_builder = new UriBuilder(scheme, host, port, path ?? "/", extraValue);
+			_builder = new UriBuilder(
+				scheme,
+				host,
+				port,
+				path ?? "/",
+				extraValue);
 			Init();
 		}
 
@@ -185,10 +192,7 @@ namespace PK.Utils.Http
 		/// </summary>
 		/// <param name="name">Parameter name</param>
 		/// <param name="value">Parameter value</param>
-		public void AddParameter(string name, object value)
-		{
-			AddParameter(name, value, false);
-		}
+		public void AddParameter(string name, object value) => AddParameter(name, value, false);
 
 		/// <summary>
 		/// Add parameter to query
@@ -215,11 +219,11 @@ namespace PK.Utils.Http
 		/// <param name="placeholders">Array of search-replace tuples</param>
 		public void ReplacePlaceHolders([NotNull] params (string Search, string Replace)[] placeholders)
 		{
-			for (int i = 0; i < _segments.Count; i++)
+			for (var i = 0; i < _segments.Count; i++)
 			{
 				if (_segments[i] != null)
 				{
-					string newVal = _segments[i]; 
+					var newVal = _segments[i];
 					foreach (var placeholder in placeholders)
 					{
 						newVal = newVal.Replace(placeholder.Search, placeholder.Replace);
@@ -228,14 +232,14 @@ namespace PK.Utils.Http
 					_segments[i] = newVal;
 				}
 			}
-			
+
 			foreach (var pair in _queryParams)
 			{
 				if (pair.Value != null)
 				{
-					for (int i = 0; i < pair.Value.Count; i++)
+					for (var i = 0; i < pair.Value.Count; i++)
 					{
-						string newVal = pair.Value[i];
+						var newVal = pair.Value[i];
 						foreach (var placeholder in placeholders)
 						{
 							newVal = newVal.Replace(placeholder.Search, placeholder.Replace);
@@ -274,7 +278,7 @@ namespace PK.Utils.Http
 			_segments = new ObservableCollection<string>(
 				_builder.Path.Split('/') ?? Enumerable.Empty<string>()
 				);
-			
+
 			_segments.CollectionChanged += SegmentsOnCollectionChanged;
 
 			_segmentsChanged = true;
@@ -289,6 +293,7 @@ namespace PK.Utils.Http
 				{
 					collection.CollectionChanged += ParametersValueOnCollectionChanged;
 				}
+
 				_queryParams.Add(name, collection);
 			}
 
@@ -311,12 +316,12 @@ namespace PK.Utils.Http
 			_queryParams.CollectionChanged += ParametersOnCollectionChanged;
 
 			var query = _builder.Query;
-			int start = -1;
+			var start = -1;
 			string name = null;
 
 			var lastIndex = query.Length - 1;
-			
-			for (int i = 0; i < query.Length; i++)
+
+			for (var i = 0; i < query.Length; i++)
 			{
 				if (query[i] == '?' && i == 0)
 				{
@@ -343,20 +348,19 @@ namespace PK.Utils.Http
 					start = -1;
 					continue;
 				}
-				
+
 				if (query[i] == '=')
 				{
 					name = HttpUtility.UrlDecode(query[start..i], Encoding);
 				}
 			}
+
 			_queryParamsChanged = true;
 		}
 
-		private void SegmentsOnCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
-		{
+		private void SegmentsOnCollectionChanged(object sender, NotifyCollectionChangedEventArgs e) =>
 			_segmentsChanged = true;
-		}
-		
+
 		private void ParametersOnCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
 		{
 			_queryParamsChanged = true;
@@ -364,7 +368,7 @@ namespace PK.Utils.Http
 			{
 				foreach (var oldItem in e.OldItems)
 				{
-					var collection = (KeyValuePair<string, ObservableCollection<string>>) oldItem;
+					var collection = (KeyValuePair<string, ObservableCollection<string>>)oldItem;
 					collection.Value.CollectionChanged -= ParametersValueOnCollectionChanged;
 				}
 			}
@@ -373,24 +377,22 @@ namespace PK.Utils.Http
 			{
 				foreach (var newItem in e.NewItems)
 				{
-					var collection = (KeyValuePair<string, ObservableCollection<string>>) newItem;
+					var collection = (KeyValuePair<string, ObservableCollection<string>>)newItem;
 					collection.Value.CollectionChanged -= ParametersValueOnCollectionChanged;
 					collection.Value.CollectionChanged += ParametersValueOnCollectionChanged;
 				}
 			}
 		}
 
-		private void ParametersValueOnCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
-		{
+		private void ParametersValueOnCollectionChanged(object sender, NotifyCollectionChangedEventArgs e) =>
 			_queryParamsChanged = true;
-		}
 
 		private void UpdateChangedFields()
 		{
 			UpdateSegments();
 			UpdateQuery();
 		}
-		
+
 		private void UpdateSegments()
 		{
 			if (_segmentsChanged)
@@ -411,7 +413,7 @@ namespace PK.Utils.Http
 				}
 
 				var builder = new StringBuilder();
-				bool first = true;
+				var first = true;
 
 				foreach (var pair in _queryParams)
 				{

@@ -21,7 +21,10 @@ namespace PK.Utils
 		/// <returns>Parameters dictionary</returns>
 		[NotNull]
 		[PublicAPI]
-		public static IDictionary<string, IList<string>> ParseQueryString([CanBeNull] string query, Encoding encoding = null)
+		public static IDictionary<string, IList<string>> ParseQueryString(
+			[CanBeNull] string query,
+			Encoding encoding = null
+			)
 		{
 			var parseResult = new Dictionary<string, IList<string>>();
 
@@ -83,7 +86,7 @@ namespace PK.Utils
 			}
 
 			var builder = new StringBuilder();
-			bool first = true;
+			var first = true;
 
 			foreach (var pair in paramsList)
 			{
@@ -133,10 +136,8 @@ namespace PK.Utils
 		/// <returns>True if success status code</returns>
 		[Pure]
 		[PublicAPI]
-		public static bool IsSuccessStatusCode(this HttpStatusCode statusCode)
-		{
-			return ((int) statusCode >= 200) && ((int) statusCode <= 299);
-		}
+		public static bool IsSuccessStatusCode(this HttpStatusCode statusCode) =>
+			(int)statusCode >= 200 && (int)statusCode <= 299;
 
 		/// <summary>
 		/// Parse UriBuilder's query into dictionary of parameters
@@ -146,10 +147,10 @@ namespace PK.Utils
 		/// <returns>Parameters dictionary</returns>
 		[NotNull]
 		[PublicAPI]
-		public static IDictionary<string, IList<string>> ParseQueryString(this UriBuilder builder, Encoding encoding = null)
-		{
-			return ParseQueryString(builder.Query, encoding);
-		}
+		public static IDictionary<string, IList<string>> ParseQueryString(
+			this UriBuilder builder,
+			Encoding encoding = null
+			) => ParseQueryString(builder.Query, encoding);
 
 		/// <summary>
 		/// Formats UriBuilder's query from dictionary of parameters
@@ -160,16 +161,18 @@ namespace PK.Utils
 		/// <returns></returns>
 		[NotNull]
 		[PublicAPI]
-		public static string SetQueryParams([NotNull] this UriBuilder builder,
+		public static string SetQueryParams(
+			[NotNull] this UriBuilder builder,
 			[NotNull] IDictionary<string, IList<string>> paramList,
-			Encoding encoding = null)
+			Encoding encoding = null
+			)
 		{
 			builder.Query = FormatQueryString(paramList, encoding);
 			return builder.Query;
 		}
 
 		/// <summary>
-		/// Searches query params for placeholders and replaces them with provided values 
+		/// Searches query params for placeholders and replaces them with provided values
 		/// </summary>
 		/// <param name="paramList">Parameters dictionary</param>
 		/// <param name="placeholders">Search-replace values</param>
@@ -186,7 +189,7 @@ namespace PK.Utils
 			{
 				if (pair.Value != null)
 				{
-					for (int i = 0; i < pair.Value.Count; i++)
+					for (var i = 0; i < pair.Value.Count; i++)
 					{
 						foreach (var placeholder in placeholders)
 						{
@@ -221,7 +224,7 @@ namespace PK.Utils
 		}
 
 		/// <summary>
-		/// Searches UriBuilder's query params for placeholders and replaces them with provided values 
+		/// Searches UriBuilder's query params for placeholders and replaces them with provided values
 		/// </summary>
 		/// <param name="builder">Uri builder instance</param>
 		/// <param name="encoding">Encoding (default UTF-8)</param>

@@ -31,5 +31,4 @@ namespace PK.Utils.Factories
 		/// <returns>Created value</returns>
 		T Create(TParam obj);
 	}
-
 }

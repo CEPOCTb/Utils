@@ -22,19 +22,14 @@ namespace PK.Utils.Observable
 		/// <summary>
 		/// Constructor
 		/// </summary>
-		public ObservableDictionary()
-		{
-			_dictionary = new Dictionary<TKey, TValue>();
-		}
+		public ObservableDictionary() => _dictionary = new Dictionary<TKey, TValue>();
 
 		/// <summary>
 		/// Copy-constructor
 		/// </summary>
 		/// <param name="dictionary">Source dictionary</param>
-		public ObservableDictionary([NotNull] IDictionary<TKey, TValue> dictionary)
-		{
+		public ObservableDictionary([NotNull] IDictionary<TKey, TValue> dictionary) =>
 			_dictionary = new Dictionary<TKey, TValue>(dictionary);
-		}
 
 		/// <summary>
 		/// Copy-constructor
@@ -43,50 +38,36 @@ namespace PK.Utils.Observable
 		/// <param name="comparer">Key equality comparer</param>
 		public ObservableDictionary(
 			[NotNull] IDictionary<TKey, TValue> dictionary,
-			[CanBeNull] IEqualityComparer<TKey> comparer)
-		{
+			[CanBeNull] IEqualityComparer<TKey> comparer
+			) =>
 			_dictionary = new Dictionary<TKey, TValue>(dictionary, comparer);
-		}
 
 		/// <summary>
 		/// Constructor
 		/// </summary>
 		/// <param name="comparer">Key equality comparer</param>
-		public ObservableDictionary([CanBeNull] IEqualityComparer<TKey> comparer)
-		{
+		public ObservableDictionary([CanBeNull] IEqualityComparer<TKey> comparer) =>
 			_dictionary = new Dictionary<TKey, TValue>(comparer);
-		}
 
 		/// <summary>
 		/// Constructor
 		/// </summary>
 		/// <param name="capacity">Initial capacity</param>
-		public ObservableDictionary(int capacity)
-		{
-			_dictionary = new Dictionary<TKey, TValue>(capacity);
-		}
+		public ObservableDictionary(int capacity) => _dictionary = new Dictionary<TKey, TValue>(capacity);
 
 		/// <summary>
 		/// Constructor
 		/// </summary>
 		/// <param name="capacity">Initial capacity</param>
 		/// <param name="comparer">Key equality comparer</param>
-		public ObservableDictionary(int capacity, [CanBeNull] IEqualityComparer<TKey> comparer)
-		{
+		public ObservableDictionary(int capacity, [CanBeNull] IEqualityComparer<TKey> comparer) =>
 			_dictionary = new Dictionary<TKey, TValue>(capacity, comparer);
-		}
 
 		/// <inheritdoc />
-		public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator()
-		{
-			return _dictionary.GetEnumerator();
-		}
+		public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator() => _dictionary.GetEnumerator();
 
 		/// <inheritdoc />
-		IEnumerator IEnumerable.GetEnumerator()
-		{
-			return ((IEnumerable) _dictionary).GetEnumerator();
-		}
+		IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable)_dictionary).GetEnumerator();
 
 		/// <inheritdoc />
 		public void Add(KeyValuePair<TKey, TValue> item)
@@ -110,16 +91,10 @@ namespace PK.Utils.Observable
 		}
 
 		/// <inheritdoc />
-		public bool Contains(KeyValuePair<TKey, TValue> item)
-		{
-			return _dictionary.Contains(item);
-		}
+		public bool Contains(KeyValuePair<TKey, TValue> item) => _dictionary.Contains(item);
 
 		/// <inheritdoc />
-		public void CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex)
-		{
-			_dictionary.CopyTo(array, arrayIndex);
-		}
+		public void CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex) => _dictionary.CopyTo(array, arrayIndex);
 
 		/// <inheritdoc />
 		public bool Remove(KeyValuePair<TKey, TValue> item)
@@ -144,10 +119,7 @@ namespace PK.Utils.Observable
 		public bool IsReadOnly => _dictionary.IsReadOnly;
 
 		/// <inheritdoc />
-		public bool ContainsKey(TKey key)
-		{
-			return _dictionary.ContainsKey(key);
-		}
+		public bool ContainsKey(TKey key) => _dictionary.ContainsKey(key);
 
 		/// <inheritdoc />
 		public void Add(TKey key, TValue value)
@@ -176,14 +148,10 @@ namespace PK.Utils.Observable
 					)
 				);
 			return true;
-
 		}
 
 		/// <inheritdoc />
-		public bool TryGetValue(TKey key, out TValue value)
-		{
-			return _dictionary.TryGetValue(key, out value);
-		}
+		public bool TryGetValue(TKey key, out TValue value) => _dictionary.TryGetValue(key, out value);
 
 		/// <inheritdoc />
 		public TValue this[TKey key]
@@ -201,7 +169,7 @@ namespace PK.Utils.Observable
 						NotifyCollectionChangedAction.Add,
 						new KeyValuePair<TKey, TValue>(key, value)
 						);
-				
+
 				_dictionary[key] = value;
 
 				OnCollectionChanged(eventArgs);
@@ -246,9 +214,7 @@ namespace PK.Utils.Observable
 		/// </summary>
 		/// <param name="propertyName">Changed property name</param>
 		[NotifyPropertyChangedInvocator]
-		protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
-		{
+		protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null) =>
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-		}
 	}
 }
