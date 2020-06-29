@@ -4,6 +4,9 @@ using JetBrains.Annotations;
 
 namespace PK.Utils.Synchronization
 {
+	/// <summary>
+	/// Extensions for <see cref="ReaderWriterLock"/> and <see cref="ReaderWriterLockSlim"/>
+	/// </summary>
 	[PublicAPI]
 	public static class ReadWriteLockExtensions
 	{

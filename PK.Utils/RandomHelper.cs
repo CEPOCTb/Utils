@@ -4,6 +4,9 @@ using JetBrains.Annotations;
 
 namespace PK.Utils
 {
+	/// <summary>
+	/// Static random helper class
+	/// </summary>
 	[PublicAPI]
 	public static class RandomHelper
 	{
@@ -11,6 +14,9 @@ namespace PK.Utils
 		private static readonly ThreadLocal<Random> _random =
 			new ThreadLocal<Random>(() => new Random(Guid.NewGuid().GetHashCode()));
 
+		/// <summary>
+		/// Thread-safe <see cref="System.Random"/> instance
+		/// </summary>
 		public static Random Random => _random.Value;
 	}
 }

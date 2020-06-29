@@ -7,6 +7,11 @@ using JetBrains.Annotations;
 
 namespace PK.Utils.Observable
 {
+	/// <summary>
+	/// Dictionary with change notification
+	/// </summary>
+	/// <typeparam name="TKey">Key type</typeparam>
+	/// <typeparam name="TValue">Value type</typeparam>
 	[PublicAPI]
 	public class ObservableDictionary<TKey, TValue>
 		: IDictionary<TKey, TValue>, INotifyCollectionChanged, INotifyPropertyChanged
@@ -14,16 +19,28 @@ namespace PK.Utils.Observable
 		[NotNull]
 		private readonly IDictionary<TKey, TValue> _dictionary;
 
+		/// <summary>
+		/// Constructor
+		/// </summary>
 		public ObservableDictionary()
 		{
 			_dictionary = new Dictionary<TKey, TValue>();
 		}
 
+		/// <summary>
+		/// Copy-constructor
+		/// </summary>
+		/// <param name="dictionary">Source dictionary</param>
 		public ObservableDictionary([NotNull] IDictionary<TKey, TValue> dictionary)
 		{
 			_dictionary = new Dictionary<TKey, TValue>(dictionary);
 		}
 
+		/// <summary>
+		/// Copy-constructor
+		/// </summary>
+		/// <param name="dictionary">Source dictionary</param>
+		/// <param name="comparer">Key equality comparer</param>
 		public ObservableDictionary(
 			[NotNull] IDictionary<TKey, TValue> dictionary,
 			[CanBeNull] IEqualityComparer<TKey> comparer)
@@ -31,16 +48,29 @@ namespace PK.Utils.Observable
 			_dictionary = new Dictionary<TKey, TValue>(dictionary, comparer);
 		}
 
+		/// <summary>
+		/// Constructor
+		/// </summary>
+		/// <param name="comparer">Key equality comparer</param>
 		public ObservableDictionary([CanBeNull] IEqualityComparer<TKey> comparer)
 		{
 			_dictionary = new Dictionary<TKey, TValue>(comparer);
 		}
 
+		/// <summary>
+		/// Constructor
+		/// </summary>
+		/// <param name="capacity">Initial capacity</param>
 		public ObservableDictionary(int capacity)
 		{
 			_dictionary = new Dictionary<TKey, TValue>(capacity);
 		}
 
+		/// <summary>
+		/// Constructor
+		/// </summary>
+		/// <param name="capacity">Initial capacity</param>
+		/// <param name="comparer">Key equality comparer</param>
 		public ObservableDictionary(int capacity, [CanBeNull] IEqualityComparer<TKey> comparer)
 		{
 			_dictionary = new Dictionary<TKey, TValue>(capacity, comparer);
@@ -190,7 +220,10 @@ namespace PK.Utils.Observable
 		/// <inheritdoc />
 		public event PropertyChangedEventHandler PropertyChanged;
 
-
+		/// <summary>
+		/// Notifies observers of changing of collection content
+		/// </summary>
+		/// <param name="eventArgs">Arguments describing change</param>
 		protected virtual void OnCollectionChanged(NotifyCollectionChangedEventArgs eventArgs)
 		{
 			CollectionChanged?.Invoke(this, eventArgs);
@@ -208,6 +241,10 @@ namespace PK.Utils.Observable
 			OnPropertyChanged(nameof(Values));
 		}
 
+		/// <summary>
+		/// Notifies observers of changing a property value
+		/// </summary>
+		/// <param name="propertyName">Changed property name</param>
 		[NotifyPropertyChangedInvocator]
 		protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
 		{

@@ -7,6 +7,9 @@ using JetBrains.Annotations;
 
 namespace PK.Utils
 {
+	/// <summary>
+	/// Http extensions
+	/// </summary>
 	[PublicAPI]
 	public static class HttpUtils
 	{

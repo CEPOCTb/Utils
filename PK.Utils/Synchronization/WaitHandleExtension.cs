@@ -5,6 +5,9 @@ using JetBrains.Annotations;
 
 namespace PK.Utils.Synchronization
 {
+	/// <summary>
+	/// Extensions for <see cref="WaitHandle"/>
+	/// </summary>
 	[PublicAPI]
     public static class WaitHandleExtensions
     {

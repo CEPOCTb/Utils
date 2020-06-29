@@ -15,7 +15,7 @@ namespace PK.Utils.Factories
 		/// <summary>
 		/// Constructor
 		/// </summary>
-		/// <param name="factoryMethod">Factory method, that creates an object of type <typeparam name="T"/></param>
+		/// <param name="factoryMethod">Factory method, that creates an object of type <typeparamref name="T"/></param>
 		public GenericFactory([NotNull] Func<T> factoryMethod)
 		{
 			_factoryMethod = factoryMethod ?? throw new ArgumentNullException(nameof(factoryMethod));
@@ -45,7 +45,7 @@ namespace PK.Utils.Factories
 		/// <summary>
 		/// Constructor
 		/// </summary>
-		/// <param name="factoryMethod">Factory method, that creates an object of type <typeparam name="T"/></param>
+		/// <param name="factoryMethod">Factory method, that creates an object of type <typeparamref name="T"/></param>
 		public GenericFactory([NotNull] Func<TParam, T> factoryMethod)
 		{
 			_factoryMethod = factoryMethod ?? throw new ArgumentNullException(nameof(factoryMethod));

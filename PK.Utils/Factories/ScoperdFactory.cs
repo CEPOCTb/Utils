@@ -3,6 +3,9 @@ using JetBrains.Annotations;
 
 namespace PK.Utils.Factories
 {
+	/// <summary>
+	/// Helpers class for creating scoped factories
+	/// </summary>
 	[PublicAPI]
 	public static class ScopedFactory
 	{
