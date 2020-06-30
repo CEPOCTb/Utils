@@ -2,6 +2,7 @@
     <PropertyGroup>
 		<LangVersion>8</LangVersion>
 		<Version Condition="'$(Configuration)' == 'Debug'">$(Version)-alpha</Version>
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<IncludeSymbols>True</IncludeSymbols>
 		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
         <PackageOutputPath>$(SolutionDir)\BuildPackages\</PackageOutputPath>
