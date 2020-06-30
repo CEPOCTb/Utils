@@ -53,6 +53,9 @@ namespace PK.Utils.Factories
 
 		private void Dispose(bool disposing)
 		{
+			// will not dispose wrapped value - leave it for the client code
+			// (the lifetime of value can be managed by DI container, for example)
+
 			if (_disposed)
 			{
 				return;
@@ -61,15 +64,6 @@ namespace PK.Utils.Factories
 			_disposed = true;
 			ExecutionHelpers.Try(() => _disposeAction?.Invoke(Value));
 			ExecutionHelpers.Try(() =>_disposable?.Dispose());
-
-			ExecutionHelpers.Try(
-				() =>
-				{
-					if (Value is IDisposable disposable)
-					{
-						disposable.Dispose();
-					}
-				});
 
 			if (disposing)
 			{
