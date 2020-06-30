@@ -2,18 +2,18 @@
 
 	<PropertyGroup>
 		<TargetFramework>netstandard2.1</TargetFramework>
-		<Version>1.0.2</Version>
+		<Version>1.0.3</Version>
 	</PropertyGroup>
 
 	<PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
-	  <DefineConstants>TRACE;JETBRAINS_ANNOTATIONS</DefineConstants>
+		<DefineConstants>TRACE;JETBRAINS_ANNOTATIONS</DefineConstants>
 		<DocumentationFile>bin\Debug\PK.Utils.xml</DocumentationFile>
 	</PropertyGroup>
 
 	<PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
-	  <DefineConstants>TRACE;JETBRAINS_ANNOTATIONS</DefineConstants>
-	  <DebugSymbols>true</DebugSymbols>
-	  <DocumentationFile>bin\Release\PK.Utils.xml</DocumentationFile>
+		<DefineConstants>TRACE;JETBRAINS_ANNOTATIONS</DefineConstants>
+		<DebugSymbols>true</DebugSymbols>
+		<DocumentationFile>bin\Release\PK.Utils.xml</DocumentationFile>
 	</PropertyGroup>
 
 	<ItemGroup>

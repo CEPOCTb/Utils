@@ -12,6 +12,7 @@ namespace PK.Utils.Factories
 	{
 		private readonly Action<T> _disposeAction;
 		private readonly IDisposable _disposable;
+		private volatile bool _disposed;
 
 		/// <summary>
 		/// Constructor
@@ -45,7 +46,39 @@ namespace PK.Utils.Factories
 		#region Implementation of IDisposable
 
 		/// <inheritdoc />
-		public void Dispose() => _disposeAction?.Invoke(Value);
+		public void Dispose()
+		{
+			Dispose(true);
+		}
+
+		private void Dispose(bool disposing)
+		{
+			if (_disposed)
+			{
+				return;
+			}
+
+			_disposed = true;
+			ExecutionHelpers.Try(() => _disposeAction?.Invoke(Value));
+			ExecutionHelpers.Try(() =>_disposable?.Dispose());
+
+			ExecutionHelpers.Try(
+				() =>
+				{
+					if (Value is IDisposable disposable)
+					{
+						disposable.Dispose();
+					}
+				});
+
+			if (disposing)
+			{
+				GC.SuppressFinalize(this);
+			}
+		}
+
+		/// <inheritdoc />
+		~ScopedValue() => Dispose(false);
 
 		#endregion
 	}
