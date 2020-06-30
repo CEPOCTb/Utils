@@ -26,5 +26,5 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Push package
-        run: dotnet nuget push **/*.nupkg --apiKey ${{ secrets.NUGET_DEPLOY_KEY }} --source https://api.nuget.org/v3/index.json
+        run: dotnet nuget push **/*.nupkg -k ${{ secrets.NUGET_DEPLOY_KEY }} -s https://api.nuget.org/v3/index.json
     
