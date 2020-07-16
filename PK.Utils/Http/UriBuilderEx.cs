@@ -276,7 +276,9 @@ namespace PK.Utils.Http
 			}
 
 			_segments = new ObservableCollection<string>(
-				_builder.Path.Split('/') ?? Enumerable.Empty<string>()
+				_builder.Path.Split('/')
+					.Select(s => HttpUtility.UrlDecode(s, Encoding))
+				?? Enumerable.Empty<string>()
 				);
 
 			_segments.CollectionChanged += SegmentsOnCollectionChanged;
@@ -397,7 +399,7 @@ namespace PK.Utils.Http
 		{
 			if (_segmentsChanged)
 			{
-				_builder.Path = string.Join('/', _segments.Select(s => s.Trim()));
+				_builder.Path = string.Join('/', _segments.Select(s => HttpUtility.UrlEncode(s.Trim(), Encoding)));
 				_segmentsChanged = false;
 			}
 		}
