@@ -242,7 +242,7 @@ namespace PK.Utils.Http
 						var newVal = pair.Value[i];
 						foreach (var placeholder in placeholders)
 						{
-							newVal = newVal.Replace(placeholder.Search, placeholder.Replace);
+							newVal = newVal?.Replace(placeholder.Search, placeholder.Replace);
 						}
 
 						pair.Value[i] = newVal;
@@ -276,7 +276,9 @@ namespace PK.Utils.Http
 			}
 
 			_segments = new ObservableCollection<string>(
-				_builder.Path.Split('/')
+				_builder.Path
+					.TrimStart('/')
+					.Split('/')
 					.Select(s => HttpUtility.UrlDecode(s, Encoding))
 				?? Enumerable.Empty<string>()
 				);
@@ -339,11 +341,17 @@ namespace PK.Utils.Http
 				{
 					if (name == null && start != i) // no value
 					{
-						AddParameter(HttpUtility.UrlDecode(query[start..i], Encoding), null, true);
+						AddParameter(
+							HttpUtility.UrlDecode(query[start..(query[i] == '&' ? i : i + 1)], Encoding),
+							null,
+							true);
 					}
 					else if (name != null)
 					{
-						AddParameter(name, HttpUtility.UrlDecode(query[start..i], Encoding), true);
+						AddParameter(
+							name,
+							HttpUtility.UrlDecode(query[start..(query[i] == '&' ? i : i + 1)], Encoding),
+							true);
 					}
 
 					name = null;
@@ -354,6 +362,7 @@ namespace PK.Utils.Http
 				if (query[i] == '=')
 				{
 					name = HttpUtility.UrlDecode(query[start..i], Encoding);
+					start = i + 1;
 				}
 			}
 
