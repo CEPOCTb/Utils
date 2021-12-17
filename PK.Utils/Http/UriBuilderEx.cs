@@ -280,7 +280,6 @@ namespace PK.Utils.Http
 					.TrimStart('/')
 					.Split('/')
 					.Select(s => HttpUtility.UrlDecode(s, Encoding))
-				?? Enumerable.Empty<string>()
 				);
 
 			_segments.CollectionChanged += SegmentsOnCollectionChanged;
@@ -342,7 +341,13 @@ namespace PK.Utils.Http
 					if (name == null && start != i) // no value
 					{
 						AddParameter(
+#if NETSTANDARD2_1_OR_GREATER
 							HttpUtility.UrlDecode(query[start..(query[i] == '&' ? i : i + 1)], Encoding),
+#else
+							HttpUtility.UrlDecode(
+								query.Substring(start, query[i] == '&' ? i - start : i - start + 1),
+								Encoding),
+#endif
 							null,
 							true);
 					}
@@ -350,7 +355,13 @@ namespace PK.Utils.Http
 					{
 						AddParameter(
 							name,
+#if NETSTANDARD2_1_OR_GREATER
 							HttpUtility.UrlDecode(query[start..(query[i] == '&' ? i : i + 1)], Encoding),
+#else
+							HttpUtility.UrlDecode(
+								query.Substring(start, query[i] == '&' ? i - start : i - start + 1),
+								Encoding),
+#endif
 							true);
 					}
 
@@ -361,7 +372,11 @@ namespace PK.Utils.Http
 
 				if (query[i] == '=')
 				{
+#if NETSTANDARD2_1_OR_GREATER
 					name = HttpUtility.UrlDecode(query[start..i], Encoding);
+#else
+					name = HttpUtility.UrlDecode(query.Substring(start, i - start), Encoding);
+#endif
 					start = i + 1;
 				}
 			}
@@ -408,7 +423,13 @@ namespace PK.Utils.Http
 		{
 			if (_segmentsChanged)
 			{
-				_builder.Path = string.Join('/', _segments.Select(s => HttpUtility.UrlEncode(s.Trim(), Encoding)));
+				_builder.Path =
+#if NETSTANDARD2_1_OR_GREATER
+					string.Join('/', _segments.Select(s => HttpUtility.UrlEncode(s.Trim(), Encoding)));
+#else
+					string.Join("/", _segments.Select(s => HttpUtility.UrlEncode(s.Trim(), Encoding)));
+#endif
+
 				_segmentsChanged = false;
 			}
 		}

@@ -79,7 +79,11 @@ namespace PK.Utils.Synchronization
 			finally
 			{
 				registeredHandle?.Unregister(null);
+#if NETSTANDARD2_1_OR_GREATER || NET5_0_OR_GREATER
 				await tokenRegistration.DisposeAsync();
+#else
+				tokenRegistration.Dispose();
+#endif
 			}
 		}
 
