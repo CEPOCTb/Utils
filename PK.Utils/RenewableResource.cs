@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Logging;
+using PK.Utils.Synchronization;
 
 namespace PK.Utils
 {
@@ -18,6 +19,7 @@ namespace PK.Utils
 		[NotNull] private readonly ILogger<RenewableResource<T>> _logger;
 		private volatile Task<T> _renewTask;
 		[NotNull] private readonly CancellationTokenSource _cancellation = new CancellationTokenSource();
+		private readonly AutoResetEvent _manualRenewEvent = new AutoResetEvent(false);
 
 		/// <summary>
 		/// Constructor
@@ -37,6 +39,14 @@ namespace PK.Utils
 			Start();
 		}
 
+		/// <summary>
+		/// Force renew of resource
+		/// </summary>
+		public void Renew()
+		{
+			_manualRenewEvent.Set();
+		}
+
 		private void Start()
 		{
 			_renewTask = _factory(_cancellation.Token);
@@ -44,7 +54,11 @@ namespace PK.Utils
 				async task =>
 				{
 					_logger.LogError(task.Exception, "Start failed");
-					await Task.Delay(TimeSpan.FromMinutes(1), _cancellation.Token).ConfigureAwait(false);
+					await Task.WhenAny(
+						_manualRenewEvent.WaitOneAsync(_cancellation.Token),
+						Task.Delay(TimeSpan.FromMinutes(1), _cancellation.Token)
+						)
+						.ConfigureAwait(false);
 					if (!_cancellation.Token.IsCancellationRequested)
 					{
 						Start();
@@ -58,10 +72,13 @@ namespace PK.Utils
 			_renewTask.ContinueWith(
 				async task =>
 				{
-					await Task.Delay(_interval, _cancellation.Token).ConfigureAwait(false);
+					await Task.WhenAny(
+						_manualRenewEvent.WaitOneAsync(_cancellation.Token),
+						Task.Delay(_interval, _cancellation.Token)
+						).ConfigureAwait(false);
 					if (!_cancellation.Token.IsCancellationRequested)
 					{
-						Renew();
+						RenewInternal();
 					}
 				},
 				_cancellation.Token,
@@ -70,7 +87,7 @@ namespace PK.Utils
 				);
 		}
 
-		private void Renew()
+		private void RenewInternal()
 		{
 			var renewTask = _factory(_cancellation.Token);
 			renewTask.ContinueWith(
@@ -80,50 +97,52 @@ namespace PK.Utils
 				TaskScheduler.Current
 				);
 			renewTask.ContinueWith(
-					async task =>
+				async task =>
+				{
+					if (!task.IsCompleted && task.Exception != null)
 					{
-						if (!task.IsCompleted && task.Exception != null)
+						if (task.IsFaulted)
 						{
-							if (task.IsFaulted)
-							{
-								_logger.LogError(task.Exception, "Failed to renew resource");
-							}
-							else
-							{
-								_logger.LogInformation("Renew task cancelled");
-								return;
-							}
-						}
-
-						if (!_cancellation.Token.IsCancellationRequested)
-						{
-							await Task.Delay(_interval, _cancellation.Token).ConfigureAwait(false);
+							_logger.LogError(task.Exception, "Failed to renew resource");
 						}
 						else
 						{
 							_logger.LogInformation("Renew task cancelled");
 							return;
 						}
+					}
 
-						if (!_cancellation.Token.IsCancellationRequested)
-						{
-							Renew();
-						}
-						else
-						{
-							_logger.LogInformation("Renew task cancelled");
-						}
-					},
-					_cancellation.Token
-					)
-				.ContinueWith(
-					task =>
+					if (!_cancellation.Token.IsCancellationRequested)
+					{
+						await Task.WhenAny(
+							_manualRenewEvent.WaitOneAsync(_cancellation.Token),
+							Task.Delay(_interval, _cancellation.Token)
+							).ConfigureAwait(false);
+					}
+					else
 					{
 						_logger.LogInformation("Renew task cancelled");
-					},
-					TaskContinuationOptions.OnlyOnCanceled
-					)
-				;
+						return;
+					}
+
+					if (!_cancellation.Token.IsCancellationRequested)
+					{
+						RenewInternal();
+					}
+					else
+					{
+						_logger.LogInformation("Renew task cancelled");
+					}
+				},
+				_cancellation.Token
+				)
+			.ContinueWith(
+				task =>
+				{
+					_logger.LogInformation("Renew task cancelled");
+				},
+				TaskContinuationOptions.OnlyOnCanceled
+				);
 		}
 
 		/// <summary>
@@ -133,8 +152,7 @@ namespace PK.Utils
 		{
 			get
 			{
-				if (_renewTask.Status == TaskStatus.RanToCompletion
-					|| _renewTask.Status == TaskStatus.WaitingForChildrenToComplete)
+				if (_renewTask.Status is TaskStatus.RanToCompletion or TaskStatus.WaitingForChildrenToComplete)
 				{
 					return _renewTask.Result;
 				}
