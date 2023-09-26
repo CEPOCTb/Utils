@@ -8,448 +8,463 @@ using System.Web;
 using JetBrains.Annotations;
 using PK.Utils.Observable;
 
-namespace PK.Utils.Http
+namespace PK.Utils.Http;
+
+/// <summary>
+/// Extended UriBuilder
+/// </summary>
+[PublicAPI]
+public class UriBuilderEx
 {
+	[NotNull] private readonly UriBuilder _builder;
+	private ObservableCollection<string> _segments;
+	private bool _segmentsChanged;
+	private ObservableDictionary<string, ObservableCollection<string>> _queryParams;
+	private bool _queryParamsChanged;
+
 	/// <summary>
-	/// Extended UriBuilder
+	/// <see cref="P:UriBuilder.Port"/>
 	/// </summary>
-	[PublicAPI]
-	public class UriBuilderEx
+	public int Port
 	{
-		[NotNull] private readonly UriBuilder _builder;
-		private ObservableCollection<string> _segments;
-		private bool _segmentsChanged;
-		private ObservableDictionary<string, ObservableCollection<string>> _queryParams;
-		private bool _queryParamsChanged;
+		get => _builder.Port;
+		set => _builder.Port = value;
+	}
 
-		/// <summary>
-		/// <see cref="P:UriBuilder.Port"/>
-		/// </summary>
-		public int Port
+	/// <summary>
+	/// <see cref="P:UriBuilder.Scheme"/>
+	/// </summary>
+	public string Scheme
+	{
+		get => _builder.Scheme;
+		set => _builder.Scheme = value;
+	}
+
+	/// <summary>
+	/// <see cref="P:UriBuilder.Host"/>
+	/// </summary>
+	public string Host
+	{
+		get => _builder.Host;
+		set => _builder.Host = value;
+	}
+
+	/// <summary>
+	/// <see cref="P:UriBuilder.Path"/>
+	/// </summary>
+	public string Path
+	{
+		get
 		{
-			get => _builder.Port;
-			set => _builder.Port = value;
+			UpdateSegments();
+			return _builder.Path;
+		}
+		set
+		{
+			_builder.Path = value;
+			ParseSegments();
+		}
+	}
+
+	/// <summary>
+	/// <see cref="P:UriBuilder.Uri"/>
+	/// </summary>
+	public Uri Uri
+	{
+		get
+		{
+			UpdateChangedFields();
+			return _builder.Uri;
+		}
+	}
+
+	/// <summary>
+	/// <see cref="P:UriBuilder.Fragment"/>
+	/// </summary>
+	public string Fragment
+	{
+		get => _builder.Fragment;
+		set => _builder.Fragment = value;
+	}
+
+	/// <summary>
+	/// <see cref="P:UriBuilder.UserName"/>
+	/// </summary>
+	public string UserName
+	{
+		get => _builder.UserName;
+		set => _builder.UserName = value;
+	}
+
+	/// <summary>
+	/// <see cref="P:UriBuilder.Password"/>
+	/// </summary>
+	public string Password
+	{
+		get => _builder.Password;
+		set => _builder.Password = value;
+	}
+
+	/// <summary>
+	/// <see cref="P:UriBuilder.Query"/>
+	/// </summary>
+	public string Query
+	{
+		get
+		{
+			UpdateQuery();
+			return _builder.Query;
+		}
+		set
+		{
+			_builder.Query = value;
+			ParseQuery();
+		}
+	}
+
+	/// <summary>
+	/// Default encoding
+	/// </summary>
+	public Encoding Encoding { get; set; } = Encoding.UTF8;
+
+	/// <summary>
+	/// Path segments list
+	/// </summary>
+	public IList<string> Segments => _segments;
+
+	/// <summary>
+	/// Query parameters dictionary
+	/// </summary>
+	public IDictionary<string, ObservableCollection<string>> Parameters => _queryParams;
+
+
+	/// <summary>
+	/// <see cref="M:UriBuilder.ctor(System.String)"/>
+	/// </summary>
+	/// <param name="uri"></param>
+	public UriBuilderEx(string uri)
+	{
+		_builder = new UriBuilder(uri);
+		Init();
+	}
+
+	/// <summary>
+	/// <see cref="M:UriBuilder.ctor(System.Uri)"/>
+	/// </summary>
+	/// <param name="uri"></param>
+	public UriBuilderEx(Uri uri)
+	{
+		_builder = new UriBuilder(uri);
+		Init();
+	}
+
+	/// <summary>
+	/// <see cref="M:UriBuilder.ctor"/>
+	/// </summary>
+	public UriBuilderEx()
+	{
+		_builder = new UriBuilder();
+		Init();
+	}
+
+	/// <summary>
+	/// <see cref="M:UriBuilder.ctor(System.String, System.String, System.Int32, System.String, System.String)"/>
+	/// </summary>
+	public UriBuilderEx(
+		string scheme,
+		string host,
+		int port = 0,
+		string path = null,
+		string extraValue = null
+		)
+	{
+		_builder = new UriBuilder(
+			scheme,
+			host,
+			port,
+			path ?? "/",
+			extraValue);
+		Init();
+	}
+
+	/// <summary>
+	/// Add parameter to query
+	/// </summary>
+	/// <param name="name">Parameter name</param>
+	/// <param name="value">Parameter value</param>
+	public void AddParameter(string name, object value) => AddParameter(name, value, false);
+
+	/// <summary>
+	/// Add parameter to query
+	/// </summary>
+	/// <param name="name">Parameter name</param>
+	/// <param name="values">Parameter values</param>
+	public void AddParameter(string name, params object[] values)
+	{
+		if (!_queryParams.TryGetValue(name, out var collection))
+		{
+			collection = new ObservableCollection<string>();
+			_queryParams.Add(name, collection);
 		}
 
-		/// <summary>
-		/// <see cref="P:UriBuilder.Scheme"/>
-		/// </summary>
-		public string Scheme
+		foreach (var value in values)
 		{
-			get => _builder.Scheme;
-			set => _builder.Scheme = value;
+			collection.Add(value?.ToString());
 		}
+	}
 
-		/// <summary>
-		/// <see cref="P:UriBuilder.Host"/>
-		/// </summary>
-		public string Host
+	/// <summary>
+	/// Replace placeholders in segments and parameter values
+	/// </summary>
+	/// <param name="placeholders">Array of search-replace tuples</param>
+	public void ReplacePlaceHolders([NotNull] params (string Search, string Replace)[] placeholders)
+	{
+		for (var i = 0; i < _segments.Count; i++)
 		{
-			get => _builder.Host;
-			set => _builder.Host = value;
-		}
-
-		/// <summary>
-		/// <see cref="P:UriBuilder.Path"/>
-		/// </summary>
-		public string Path
-		{
-			get
+			if (_segments[i] != null)
 			{
-				UpdateSegments();
-				return _builder.Path;
-			}
-			set
-			{
-				_builder.Path = value;
-				ParseSegments();
-			}
-		}
-
-		/// <summary>
-		/// <see cref="P:UriBuilder.Uri"/>
-		/// </summary>
-		public Uri Uri
-		{
-			get
-			{
-				UpdateChangedFields();
-				return _builder.Uri;
-			}
-		}
-
-		/// <summary>
-		/// <see cref="P:UriBuilder.Fragment"/>
-		/// </summary>
-		public string Fragment
-		{
-			get => _builder.Fragment;
-			set => _builder.Fragment = value;
-		}
-
-		/// <summary>
-		/// <see cref="P:UriBuilder.UserName"/>
-		/// </summary>
-		public string UserName
-		{
-			get => _builder.UserName;
-			set => _builder.UserName = value;
-		}
-
-		/// <summary>
-		/// <see cref="P:UriBuilder.Password"/>
-		/// </summary>
-		public string Password
-		{
-			get => _builder.Password;
-			set => _builder.Password = value;
-		}
-
-		/// <summary>
-		/// <see cref="P:UriBuilder.Query"/>
-		/// </summary>
-		public string Query
-		{
-			get
-			{
-				UpdateQuery();
-				return _builder.Query;
-			}
-			set
-			{
-				_builder.Query = value;
-				ParseQuery();
-			}
-		}
-
-		/// <summary>
-		/// Default encoding
-		/// </summary>
-		public Encoding Encoding { get; set; } = Encoding.UTF8;
-
-		/// <summary>
-		/// Path segments list
-		/// </summary>
-		public IList<string> Segments => _segments;
-
-		/// <summary>
-		/// Query parameters dictionary
-		/// </summary>
-		public IDictionary<string, ObservableCollection<string>> Parameters => _queryParams;
-
-
-		/// <summary>
-		/// <see cref="M:UriBuilder.ctor(System.String)"/>
-		/// </summary>
-		/// <param name="uri"></param>
-		public UriBuilderEx(string uri)
-		{
-			_builder = new UriBuilder(uri);
-			Init();
-		}
-
-		/// <summary>
-		/// <see cref="M:UriBuilder.ctor(System.Uri)"/>
-		/// </summary>
-		/// <param name="uri"></param>
-		public UriBuilderEx(Uri uri)
-		{
-			_builder = new UriBuilder(uri);
-			Init();
-		}
-
-		/// <summary>
-		/// <see cref="M:UriBuilder.ctor"/>
-		/// </summary>
-		public UriBuilderEx()
-		{
-			_builder = new UriBuilder();
-			Init();
-		}
-
-		/// <summary>
-		/// <see cref="M:UriBuilder.ctor(System.String, System.String, System.Int32, System.String, System.String)"/>
-		/// </summary>
-		public UriBuilderEx(
-			string scheme,
-			string host,
-			int port = 0,
-			string path = null,
-			string extraValue = null
-			)
-		{
-			_builder = new UriBuilder(
-				scheme,
-				host,
-				port,
-				path ?? "/",
-				extraValue);
-			Init();
-		}
-
-		/// <summary>
-		/// Add parameter to query
-		/// </summary>
-		/// <param name="name">Parameter name</param>
-		/// <param name="value">Parameter value</param>
-		public void AddParameter(string name, object value) => AddParameter(name, value, false);
-
-		/// <summary>
-		/// Add parameter to query
-		/// </summary>
-		/// <param name="name">Parameter name</param>
-		/// <param name="values">Parameter values</param>
-		public void AddParameter(string name, params object[] values)
-		{
-			if (!_queryParams.TryGetValue(name, out var collection))
-			{
-				collection = new ObservableCollection<string>();
-				_queryParams.Add(name, collection);
-			}
-
-			foreach (var value in values)
-			{
-				collection.Add(value?.ToString());
-			}
-		}
-
-		/// <summary>
-		/// Replace placeholders in segments and parameter values
-		/// </summary>
-		/// <param name="placeholders">Array of search-replace tuples</param>
-		public void ReplacePlaceHolders([NotNull] params (string Search, string Replace)[] placeholders)
-		{
-			for (var i = 0; i < _segments.Count; i++)
-			{
-				if (_segments[i] != null)
+				var newVal = _segments[i];
+				foreach (var placeholder in placeholders)
 				{
-					var newVal = _segments[i];
+					newVal = newVal.Replace(placeholder.Search, placeholder.Replace);
+				}
+
+				_segments[i] = newVal;
+			}
+		}
+
+		foreach (var pair in _queryParams)
+		{
+			if (pair.Value != null)
+			{
+				for (var i = 0; i < pair.Value.Count; i++)
+				{
+					var newVal = pair.Value[i];
 					foreach (var placeholder in placeholders)
 					{
-						newVal = newVal.Replace(placeholder.Search, placeholder.Replace);
+						newVal = newVal?.Replace(placeholder.Search, placeholder.Replace);
 					}
 
-					_segments[i] = newVal;
+					pair.Value[i] = newVal;
 				}
 			}
+		}
+	}
+
+	#region Overrides of Object
+
+	/// <inheritdoc />
+	public override string ToString()
+	{
+		UpdateChangedFields();
+		return _builder.ToString();
+	}
+
+	#endregion
+
+	private void Init()
+	{
+		ParseSegments();
+		ParseQuery();
+	}
+
+	private void ParseSegments()
+	{
+		if (_segments != null)
+		{
+			_segments.CollectionChanged -= SegmentsOnCollectionChanged;
+		}
+
+		_segments = new ObservableCollection<string>(
+			_builder.Path
+				.TrimStart('/')
+				.Split('/')
+				.Select(s => HttpUtility.UrlDecode(s, Encoding))
+			);
+
+		_segments.CollectionChanged += SegmentsOnCollectionChanged;
+
+		_segmentsChanged = true;
+	}
+
+	private void AddParameter(string name, object value, bool registerHandlers)
+	{
+		if (!_queryParams.TryGetValue(name, out var collection))
+		{
+			collection = new ObservableCollection<string>();
+			if (registerHandlers)
+			{
+				collection.CollectionChanged += ParametersValueOnCollectionChanged;
+			}
+
+			_queryParams.Add(name, collection);
+		}
+
+		collection.Add(value?.ToString());
+	}
+
+	private void ParseQuery()
+	{
+		if (_queryParams != null)
+		{
+			_queryParams.CollectionChanged -= ParametersOnCollectionChanged;
 
 			foreach (var pair in _queryParams)
 			{
-				if (pair.Value != null)
-				{
-					for (var i = 0; i < pair.Value.Count; i++)
-					{
-						var newVal = pair.Value[i];
-						foreach (var placeholder in placeholders)
-						{
-							newVal = newVal?.Replace(placeholder.Search, placeholder.Replace);
-						}
-
-						pair.Value[i] = newVal;
-					}
-				}
+				pair.Value.CollectionChanged -= ParametersValueOnCollectionChanged;
 			}
 		}
 
-		#region Overrides of Object
+		_queryParams = new ObservableDictionary<string, ObservableCollection<string>>();
+		_queryParams.CollectionChanged += ParametersOnCollectionChanged;
 
-		/// <inheritdoc />
-		public override string ToString()
+		var query = _builder.Query;
+		var start = -1;
+		string name = null;
+
+		var lastIndex = query.Length - 1;
+
+		for (var i = 0; i < query.Length; i++)
 		{
-			UpdateChangedFields();
-			return _builder.ToString();
-		}
-
-		#endregion
-
-		private void Init()
-		{
-			ParseSegments();
-			ParseQuery();
-		}
-
-		private void ParseSegments()
-		{
-			if (_segments != null)
+			if (query[i] == '?' && i == 0)
 			{
-				_segments.CollectionChanged -= SegmentsOnCollectionChanged;
+				continue;
 			}
 
-			_segments = new ObservableCollection<string>(
-				_builder.Path
-					.TrimStart('/')
-					.Split('/')
-					.Select(s => HttpUtility.UrlDecode(s, Encoding))
-				);
-
-			_segments.CollectionChanged += SegmentsOnCollectionChanged;
-
-			_segmentsChanged = true;
-		}
-
-		private void AddParameter(string name, object value, bool registerHandlers)
-		{
-			if (!_queryParams.TryGetValue(name, out var collection))
+			if (start < 0)
 			{
-				collection = new ObservableCollection<string>();
-				if (registerHandlers)
-				{
-					collection.CollectionChanged += ParametersValueOnCollectionChanged;
-				}
-
-				_queryParams.Add(name, collection);
+				start = i;
 			}
 
-			collection.Add(value?.ToString());
-		}
-
-		private void ParseQuery()
-		{
-			if (_queryParams != null)
+			if (query[i] == '&' || i == lastIndex)
 			{
-				_queryParams.CollectionChanged -= ParametersOnCollectionChanged;
-
-				foreach (var pair in _queryParams)
+				if (name == null && start != i) // no value
 				{
-					pair.Value.CollectionChanged -= ParametersValueOnCollectionChanged;
-				}
-			}
-
-			_queryParams = new ObservableDictionary<string, ObservableCollection<string>>();
-			_queryParams.CollectionChanged += ParametersOnCollectionChanged;
-
-			var query = _builder.Query;
-			var start = -1;
-			string name = null;
-
-			var lastIndex = query.Length - 1;
-
-			for (var i = 0; i < query.Length; i++)
-			{
-				if (query[i] == '?' && i == 0)
-				{
-					continue;
-				}
-
-				if (start < 0)
-				{
-					start = i;
-				}
-
-				if (query[i] == '&' || i == lastIndex)
-				{
-					if (name == null && start != i) // no value
-					{
-						AddParameter(
+					AddParameter(
 #if NETSTANDARD2_1_OR_GREATER
 							HttpUtility.UrlDecode(query[start..(query[i] == '&' ? i : i + 1)], Encoding),
 #else
-							HttpUtility.UrlDecode(
-								query.Substring(start, query[i] == '&' ? i - start : i - start + 1),
-								Encoding),
+						HttpUtility.UrlDecode(
+							query.Substring(start, query[i] == '&' ? i - start : i - start + 1),
+							Encoding),
 #endif
-							null,
-							true);
-					}
-					else if (name != null)
-					{
-						AddParameter(
-							name,
+						null,
+						true);
+				}
+				else if (name != null)
+				{
+					AddParameter(
+						name,
 #if NETSTANDARD2_1_OR_GREATER
 							HttpUtility.UrlDecode(query[start..(query[i] == '&' ? i : i + 1)], Encoding),
 #else
-							HttpUtility.UrlDecode(
-								query.Substring(start, query[i] == '&' ? i - start : i - start + 1),
-								Encoding),
+						HttpUtility.UrlDecode(
+							query.Substring(start, query[i] == '&' ? i - start : i - start + 1),
+							Encoding),
 #endif
-							true);
-					}
-
-					name = null;
-					start = -1;
-					continue;
+						true);
 				}
 
-				if (query[i] == '=')
-				{
+				name = null;
+				start = -1;
+				continue;
+			}
+
+			if (query[i] == '=')
+			{
 #if NETSTANDARD2_1_OR_GREATER
 					name = HttpUtility.UrlDecode(query[start..i], Encoding);
 #else
-					name = HttpUtility.UrlDecode(query.Substring(start, i - start), Encoding);
+				name = HttpUtility.UrlDecode(query.Substring(start, i - start), Encoding);
 #endif
-					start = i + 1;
-				}
-			}
-
-			_queryParamsChanged = true;
-		}
-
-		private void SegmentsOnCollectionChanged(object sender, NotifyCollectionChangedEventArgs e) =>
-			_segmentsChanged = true;
-
-		private void ParametersOnCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
-		{
-			_queryParamsChanged = true;
-			if (e.OldItems != null)
-			{
-				foreach (var oldItem in e.OldItems)
-				{
-					var collection = (KeyValuePair<string, ObservableCollection<string>>)oldItem;
-					collection.Value.CollectionChanged -= ParametersValueOnCollectionChanged;
-				}
-			}
-
-			if (e.NewItems != null)
-			{
-				foreach (var newItem in e.NewItems)
-				{
-					var collection = (KeyValuePair<string, ObservableCollection<string>>)newItem;
-					collection.Value.CollectionChanged -= ParametersValueOnCollectionChanged;
-					collection.Value.CollectionChanged += ParametersValueOnCollectionChanged;
-				}
+				start = i + 1;
 			}
 		}
 
-		private void ParametersValueOnCollectionChanged(object sender, NotifyCollectionChangedEventArgs e) =>
-			_queryParamsChanged = true;
+		_queryParamsChanged = true;
+	}
 
-		private void UpdateChangedFields()
+	private void SegmentsOnCollectionChanged(object sender, NotifyCollectionChangedEventArgs e) =>
+		_segmentsChanged = true;
+
+	private void ParametersOnCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+	{
+		_queryParamsChanged = true;
+		if (e.OldItems != null)
 		{
-			UpdateSegments();
-			UpdateQuery();
+			foreach (var oldItem in e.OldItems)
+			{
+				var collection = (KeyValuePair<string, ObservableCollection<string>>)oldItem;
+				collection.Value.CollectionChanged -= ParametersValueOnCollectionChanged;
+			}
 		}
 
-		private void UpdateSegments()
+		if (e.NewItems != null)
 		{
-			if (_segmentsChanged)
+			foreach (var newItem in e.NewItems)
 			{
-				_builder.Path =
+				var collection = (KeyValuePair<string, ObservableCollection<string>>)newItem;
+				collection.Value.CollectionChanged -= ParametersValueOnCollectionChanged;
+				collection.Value.CollectionChanged += ParametersValueOnCollectionChanged;
+			}
+		}
+	}
+
+	private void ParametersValueOnCollectionChanged(object sender, NotifyCollectionChangedEventArgs e) =>
+		_queryParamsChanged = true;
+
+	private void UpdateChangedFields()
+	{
+		UpdateSegments();
+		UpdateQuery();
+	}
+
+	private void UpdateSegments()
+	{
+		if (_segmentsChanged)
+		{
+			_builder.Path =
 #if NETSTANDARD2_1_OR_GREATER
 					string.Join('/', _segments.Select(s => HttpUtility.UrlEncode(s.Trim(), Encoding)));
 #else
-					string.Join("/", _segments.Select(s => HttpUtility.UrlEncode(s.Trim(), Encoding)));
+				string.Join("/", _segments.Select(s => HttpUtility.UrlEncode(s.Trim(), Encoding)));
 #endif
 
-				_segmentsChanged = false;
-			}
+			_segmentsChanged = false;
 		}
+	}
 
-		private void UpdateQuery()
+	private void UpdateQuery()
+	{
+		if (_queryParamsChanged)
 		{
-			if (_queryParamsChanged)
+			if (_queryParams.Count <= 0)
 			{
-				if (_queryParams.Count <= 0)
+				_builder.Query = string.Empty;
+				return;
+			}
+
+			var builder = new StringBuilder();
+			var first = true;
+
+			foreach (var pair in _queryParams)
+			{
+				if (pair.Value == null)
 				{
-					_builder.Query = string.Empty;
-					return;
+					if (first)
+					{
+						first = false;
+					}
+					else
+					{
+						builder.Append('&');
+					}
+
+					builder.Append(HttpUtility.UrlEncode(pair.Key, Encoding));
 				}
-
-				var builder = new StringBuilder();
-				var first = true;
-
-				foreach (var pair in _queryParams)
+				else
 				{
-					if (pair.Value == null)
+					foreach (var value in pair.Value)
 					{
 						if (first)
 						{
@@ -461,34 +476,18 @@ namespace PK.Utils.Http
 						}
 
 						builder.Append(HttpUtility.UrlEncode(pair.Key, Encoding));
-					}
-					else
-					{
-						foreach (var value in pair.Value)
+						if (pair.Value != null)
 						{
-							if (first)
-							{
-								first = false;
-							}
-							else
-							{
-								builder.Append('&');
-							}
-
-							builder.Append(HttpUtility.UrlEncode(pair.Key, Encoding));
-							if (pair.Value != null)
-							{
-								builder.Append('=');
-								builder.Append(HttpUtility.UrlEncode(value, Encoding));
-							}
+							builder.Append('=');
+							builder.Append(HttpUtility.UrlEncode(value, Encoding));
 						}
 					}
 				}
-
-				_builder.Query = builder.ToString();
-
-				_queryParamsChanged = false;
 			}
+
+			_builder.Query = builder.ToString();
+
+			_queryParamsChanged = false;
 		}
 	}
 }

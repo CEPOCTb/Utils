@@ -5,98 +5,102 @@ using JetBrains.Annotations;
 using Microsoft.Extensions.Logging;
 using PK.Utils.Synchronization;
 
-namespace PK.Utils
+namespace PK.Utils;
+
+/// <summary>
+/// Class, that periodically updates some resource value
+/// </summary>
+/// <typeparam name="T">Resource type</typeparam>
+[PublicAPI]
+public class RenewableResource<T> : IDisposable
 {
+	[NotNull] private readonly Func<CancellationToken, Task<T>> _factory;
+	[NotNull] private readonly ILogger<RenewableResource<T>> _logger;
+	private volatile Task<T> _renewTask;
+	[NotNull] private readonly CancellationTokenSource _cancellation = new CancellationTokenSource();
+	private readonly AutoResetEvent _manualRenewEvent = new AutoResetEvent(false);
+
 	/// <summary>
-	/// Class, that periodically updates some resource value
+	/// Renew interval
 	/// </summary>
-	/// <typeparam name="T">Resource type</typeparam>
-	[PublicAPI]
-	public class RenewableResource<T> : IDisposable
+	public TimeSpan Interval { get; set; }
+
+	/// <summary>
+	/// Constructor
+	/// </summary>
+	/// <param name="factory">Async factory method for creation of resource</param>
+	/// <param name="interval">Update interval</param>
+	/// <param name="logger">Logger instance</param>
+	public RenewableResource(
+		[NotNull] Func<CancellationToken, Task<T>> factory,
+		TimeSpan interval,
+		[NotNull] ILogger<RenewableResource<T>> logger
+		)
 	{
-		[NotNull] private readonly Func<CancellationToken, Task<T>> _factory;
-		private readonly TimeSpan _interval;
-		[NotNull] private readonly ILogger<RenewableResource<T>> _logger;
-		private volatile Task<T> _renewTask;
-		[NotNull] private readonly CancellationTokenSource _cancellation = new CancellationTokenSource();
-		private readonly AutoResetEvent _manualRenewEvent = new AutoResetEvent(false);
+		_factory = factory ?? throw new ArgumentNullException(nameof(factory));
+		Interval = interval;
+		_logger = logger ?? throw new ArgumentNullException(nameof(logger));
+		Start();
+	}
 
-		/// <summary>
-		/// Constructor
-		/// </summary>
-		/// <param name="factory">Async factory method for creation of resource</param>
-		/// <param name="interval">Update interval</param>
-		/// <param name="logger">Logger instance</param>
-		public RenewableResource(
-			[NotNull] Func<CancellationToken, Task<T>> factory,
-			TimeSpan interval,
-			[NotNull] ILogger<RenewableResource<T>> logger
-			)
-		{
-			_factory = factory ?? throw new ArgumentNullException(nameof(factory));
-			_interval = interval;
-			_logger = logger ?? throw new ArgumentNullException(nameof(logger));
-			Start();
-		}
+	/// <summary>
+	/// Force renew of resource
+	/// </summary>
+	public void Renew()
+	{
+		_manualRenewEvent.Set();
+	}
 
-		/// <summary>
-		/// Force renew of resource
-		/// </summary>
-		public void Renew()
-		{
-			_manualRenewEvent.Set();
-		}
-
-		private void Start()
-		{
-			_renewTask = _factory(_cancellation.Token);
-			_renewTask.ContinueWith(
-				async task =>
-				{
-					_logger.LogError(task.Exception, "Start failed");
-					await Task.WhenAny(
+	private void Start()
+	{
+		_renewTask = _factory(_cancellation.Token);
+		_renewTask.ContinueWith(
+			async task =>
+			{
+				_logger.LogError(task.Exception, "Start failed");
+				await Task.WhenAny(
 						_manualRenewEvent.WaitOneAsync(_cancellation.Token),
 						Task.Delay(TimeSpan.FromMinutes(1), _cancellation.Token)
 						)
-						.ConfigureAwait(false);
-					if (!_cancellation.Token.IsCancellationRequested)
-					{
-						Start();
-					}
-				},
-				_cancellation.Token,
-				TaskContinuationOptions.OnlyOnFaulted,
-				TaskScheduler.Current
-				);
-
-			_renewTask.ContinueWith(
-				async task =>
+					.ConfigureAwait(false);
+				if (!_cancellation.Token.IsCancellationRequested)
 				{
-					await Task.WhenAny(
-						_manualRenewEvent.WaitOneAsync(_cancellation.Token),
-						Task.Delay(_interval, _cancellation.Token)
-						).ConfigureAwait(false);
-					if (!_cancellation.Token.IsCancellationRequested)
-					{
-						RenewInternal();
-					}
-				},
-				_cancellation.Token,
-				TaskContinuationOptions.OnlyOnRanToCompletion,
-				TaskScheduler.Current
-				);
-		}
+					Start();
+				}
+			},
+			_cancellation.Token,
+			TaskContinuationOptions.OnlyOnFaulted,
+			TaskScheduler.Current
+			);
 
-		private void RenewInternal()
-		{
-			var renewTask = _factory(_cancellation.Token);
-			renewTask.ContinueWith(
-				task => { _renewTask = task; },
-				_cancellation.Token,
-				TaskContinuationOptions.OnlyOnRanToCompletion,
-				TaskScheduler.Current
-				);
-			renewTask.ContinueWith(
+		_renewTask.ContinueWith(
+			async task =>
+			{
+				await Task.WhenAny(
+					_manualRenewEvent.WaitOneAsync(_cancellation.Token),
+					Task.Delay(Interval, _cancellation.Token)
+					).ConfigureAwait(false);
+				if (!_cancellation.Token.IsCancellationRequested)
+				{
+					RenewInternal();
+				}
+			},
+			_cancellation.Token,
+			TaskContinuationOptions.OnlyOnRanToCompletion,
+			TaskScheduler.Current
+			);
+	}
+
+	private void RenewInternal()
+	{
+		var renewTask = _factory(_cancellation.Token);
+		renewTask.ContinueWith(
+			task => { _renewTask = task; },
+			_cancellation.Token,
+			TaskContinuationOptions.OnlyOnRanToCompletion,
+			TaskScheduler.Current
+			);
+		renewTask.ContinueWith(
 				async task =>
 				{
 					if (!task.IsCompleted && task.Exception != null)
@@ -116,7 +120,7 @@ namespace PK.Utils
 					{
 						await Task.WhenAny(
 							_manualRenewEvent.WaitOneAsync(_cancellation.Token),
-							Task.Delay(_interval, _cancellation.Token)
+							Task.Delay(Interval, _cancellation.Token)
 							).ConfigureAwait(false);
 					}
 					else
@@ -143,36 +147,42 @@ namespace PK.Utils
 				},
 				TaskContinuationOptions.OnlyOnCanceled
 				);
-		}
+	}
 
-		/// <summary>
-		/// Current value
-		/// </summary>
-		public T Value
+	/// <summary>
+	/// Current value (will not wait for initial task completion, use <see cref="GetCurrentValue"/>)
+	/// </summary>
+	public T Value
+	{
+		get
 		{
-			get
+			if (_renewTask.Status is TaskStatus.RanToCompletion or TaskStatus.WaitingForChildrenToComplete)
 			{
-				if (_renewTask.Status is TaskStatus.RanToCompletion or TaskStatus.WaitingForChildrenToComplete)
-				{
-					return _renewTask.Result;
-				}
-
-				return default;
+				return _renewTask.Result;
 			}
-		}
 
-		/// <summary>
-		/// Current task
-		/// </summary>
-		public Task<T> AsyncValue => _renewTask;
-
-		/// <summary>
-		/// IDisposable implementation
-		/// </summary>
-		public void Dispose()
-		{
-			_cancellation.Cancel();
-			_renewTask?.Dispose();
+			return default;
 		}
+	}
+
+	/// <summary>
+	/// Get Current value (will block current thread to wait for a task to complete)
+	/// </summary>
+	/// <returns>Current value</returns>
+	public T GetCurrentValue() => _renewTask.GetAwaiter().GetResult();
+
+
+	/// <summary>
+	/// Current task
+	/// </summary>
+	public Task<T> AsyncValue => _renewTask;
+
+	/// <summary>
+	/// IDisposable implementation
+	/// </summary>
+	public void Dispose()
+	{
+		_cancellation.Cancel();
+		_renewTask?.Dispose();
 	}
 }

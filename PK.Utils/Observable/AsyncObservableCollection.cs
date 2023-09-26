@@ -3,56 +3,55 @@ using System.Collections.Immutable;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace PK.Utils.Observable
+namespace PK.Utils.Observable;
+
+/// <summary>
+/// Helper class to easily manage observer registrations and notifications
+/// </summary>
+/// <typeparam name="T">Observable event type</typeparam>
+public class AsyncObservableCollection<T> : IAsyncObservable<T>
 {
+	private ImmutableList<IAsyncObserver<T>> _observers = ImmutableList.Create<IAsyncObserver<T>>();
+
 	/// <summary>
-	/// Helper class to easily manage observer registrations and notifications
+	/// Notify observers of event
 	/// </summary>
-	/// <typeparam name="T">Observable event type</typeparam>
-	public class AsyncObservableCollection<T> : IAsyncObservable<T>
+	/// <param name="obj">Event</param>
+	/// <param name="token">Cancellation token</param>
+	/// <returns></returns>
+	public async Task Notify(T obj, CancellationToken token = default)
 	{
-		private ImmutableList<IAsyncObserver<T>> _observers = ImmutableList.Create<IAsyncObserver<T>>();
+		var observers = _observers;
 
-		/// <summary>
-		/// Notify observers of event
-		/// </summary>
-		/// <param name="obj">Event</param>
-		/// <param name="token">Cancellation token</param>
-		/// <returns></returns>
-		public async Task Notify(T obj, CancellationToken token = default)
+		foreach (var observer in _observers)
 		{
-			var observers = _observers;
-
-			foreach (var observer in _observers)
-			{
-				await observer.Update(obj, token).ConfigureAwait(false);
-			}
+			await observer.Update(obj, token).ConfigureAwait(false);
 		}
-
-		#region Implementation of IAsyncObservable<out T>
-
-		/// <inheritdoc />
-		public void Register(IAsyncObserver<T> observer)
-		{
-			if (observer == null)
-			{
-				throw new ArgumentNullException(nameof(observer));
-			}
-
-			Interlocked.Exchange(ref _observers, _observers.Add(observer));
-		}
-
-		/// <inheritdoc />
-		public void Unregister(IAsyncObserver<T> observer)
-		{
-			if (observer == null)
-			{
-				throw new ArgumentNullException(nameof(observer));
-			}
-
-			Interlocked.Exchange(ref _observers, _observers.Remove(observer));
-		}
-
-		#endregion
 	}
+
+	#region Implementation of IAsyncObservable<out T>
+
+	/// <inheritdoc />
+	public void Register(IAsyncObserver<T> observer)
+	{
+		if (observer == null)
+		{
+			throw new ArgumentNullException(nameof(observer));
+		}
+
+		Interlocked.Exchange(ref _observers, _observers.Add(observer));
+	}
+
+	/// <inheritdoc />
+	public void Unregister(IAsyncObserver<T> observer)
+	{
+		if (observer == null)
+		{
+			throw new ArgumentNullException(nameof(observer));
+		}
+
+		Interlocked.Exchange(ref _observers, _observers.Remove(observer));
+	}
+
+	#endregion
 }
