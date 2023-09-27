@@ -13,7 +13,7 @@ public static class ExecutionHelpers
 	/// Try execute action, invoke optional callback on exception and optionally rethrow or mute exception (by default)
 	/// </summary>
 	/// <param name="action">Action to execute</param>
-	/// <param name="onException">Func to execute on exception, returning bool, indicating to rethrow exception or not</param>
+	/// <param name="onException">Func to execute on exception, returning bool, indicating to rethrow exception or not. Default - mute</param>
 	public static void Try(this Action action, Func<Exception, bool> onException = null)
 	{
 		try
