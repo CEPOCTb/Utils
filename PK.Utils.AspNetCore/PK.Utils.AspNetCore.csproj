@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+    <PropertyGroup>
+        <Version>1.0.0</Version>
+        <TargetFrameworks>net6.0;net7.0</TargetFrameworks>
+        <OutputType>Library</OutputType>
+        <IsPackable>true</IsPackable>
+    </PropertyGroup>
+    <ItemGroup>
+      <PackageReference Include="JetBrains.Annotations" Version="2023.2.0" />
+    </ItemGroup>
+</Project>
