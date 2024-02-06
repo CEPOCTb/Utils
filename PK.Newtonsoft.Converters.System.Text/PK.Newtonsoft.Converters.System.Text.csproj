@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <Version>1.0.0</Version>
+        <TargetFrameworks>net6.0;net7.0;net5.0;netcoreapp3.1</TargetFrameworks>
+        <LangVersion>default</LangVersion>
+        <Title>Convert objects between System.Text.Json and Newtonsoft.Json</Title>
+        <Description>A set of converters to convert objects between System.Text.Json JsonDocument, JsonElement, JsonNode and Newtonsoft.Json JObject, JArray, JValue</Description>
+        <PackageTags>json newtonsoft systemtextjson</PackageTags>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+        <DefineConstants>TRACE;JETBRAINS_ANNOTATIONS</DefineConstants>
+        <DocumentationFile>bin\Debug\PK.Newtonsoft.Converters.System.Text.xml</DocumentationFile>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+        <DefineConstants>TRACE;JETBRAINS_ANNOTATIONS</DefineConstants>
+        <DebugSymbols>true</DebugSymbols>
+        <DocumentationFile>bin\Release\PK.Newtonsoft.Converters.System.Text.xml</DocumentationFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    </ItemGroup>
+</Project>

@@ -12,6 +12,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PK.Utils.Linq", "PK.Utils.L
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PK.Utils.AspNetCore", "PK.Utils.AspNetCore\PK.Utils.AspNetCore.csproj", "{DAAA7667-31A4-4F79-89ED-F4D681EE6299}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PK.Newtonsoft.Converters.System.Text", "PK.Newtonsoft.Converters.System.Text\PK.Newtonsoft.Converters.System.Text.csproj", "{B0AAD99B-3FB7-48F0-8D0B-16DDA1C88176}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -30,5 +32,9 @@ Global
 		{DAAA7667-31A4-4F79-89ED-F4D681EE6299}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DAAA7667-31A4-4F79-89ED-F4D681EE6299}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DAAA7667-31A4-4F79-89ED-F4D681EE6299}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B0AAD99B-3FB7-48F0-8D0B-16DDA1C88176}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B0AAD99B-3FB7-48F0-8D0B-16DDA1C88176}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B0AAD99B-3FB7-48F0-8D0B-16DDA1C88176}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B0AAD99B-3FB7-48F0-8D0B-16DDA1C88176}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
