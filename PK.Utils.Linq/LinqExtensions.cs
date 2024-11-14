@@ -116,4 +116,13 @@ public static class LinqExtensions
 	}
 
 
+	/// <summary>
+	/// Assigns the input object to an out parameter and returns the same object.
+	/// </summary>
+	/// <param name="instance">Input object</param>
+	/// <param name="sameInstance">Output object</param>
+	/// <typeparam name="T">Object type</typeparam>
+	/// <returns>The input object</returns>
+	/// <example><code>if (array.FirstOrDefault().Out(out var item) &amp;&amp; item is SomeItemType) {...}</code></example>
+	public static T Out<T>(this T instance, out T sameInstance) => sameInstance = instance;
 }
