@@ -8,7 +8,7 @@ namespace PK.Utils.Factories;
 /// </summary>
 /// <typeparam name="T">Value type</typeparam>
 [PublicAPI]
-public interface IScopedValue<out T> : IDisposable
+public interface IScopedValue<out T> : IDisposable, IAsyncDisposable
 {
 	/// <summary>
 	/// Wrapped value

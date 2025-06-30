@@ -1,8 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <Version>1.1.0</Version>
-        <TargetFrameworks>net6.0;net7.0;net8.0;net5.0;netcoreapp3.1</TargetFrameworks>
+        <Version>1.3.0</Version>
+        <TargetFrameworks>net6.0;net7.0;net8.0;net9.0;net5.0;netcoreapp3.1</TargetFrameworks>
         <LangVersion>default</LangVersion>
         <Title>Convert objects between System.Text.Json and Newtonsoft.Json</Title>
         <Description>A set of converters to convert objects between System.Text.Json JsonDocument, JsonElement, JsonNode and Newtonsoft.Json JObject, JArray, JValue</Description>

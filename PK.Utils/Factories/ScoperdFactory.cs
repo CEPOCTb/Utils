@@ -17,7 +17,7 @@ public static class ScopedFactory
 	/// <typeparam name="T">Value type</typeparam>
 	/// <typeparam name="TScope">Scope type</typeparam>
 	/// <returns>Factory</returns>
-	public static ScopedFactory<T, TScope> CreateFactory<T, TScope>(
+	public static IScopedAbstractFactory<T> CreateFactory<T, TScope>(
 		[NotNull] Func<TScope> scopeFactory,
 		[NotNull] Func<TScope, T> factory
 		)
@@ -33,7 +33,7 @@ public static class ScopedFactory
 	/// <typeparam name="TParam">Parameter type</typeparam>
 	/// <typeparam name="TScope">Scope type</typeparam>
 	/// <returns>Factory</returns>
-	public static ScopedFactory<T, TParam, TScope> CreateFactory<T, TParam, TScope>(
+	public static IScopedAbstractFactory<T, TParam> CreateFactory<T, TParam, TScope>(
 		[NotNull] Func<TScope> scopeFactory,
 		[NotNull] Func<TScope, TParam, T> factory
 		)

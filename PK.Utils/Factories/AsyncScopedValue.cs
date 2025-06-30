@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
 
@@ -9,9 +9,9 @@ namespace PK.Utils.Factories;
 /// </summary>
 /// <typeparam name="T">Value type</typeparam>
 [PublicAPI]
-public class ScopedValue<T> : IScopedValue<T>
+public class AsyncScopedValue<T> : IScopedValue<T>
 {
-	private readonly Action<T> _disposeAction;
+	private readonly Func<T, ValueTask> _disposeAction;
 	private readonly IDisposable _disposable;
 	private volatile bool _disposed;
 
@@ -20,7 +20,7 @@ public class ScopedValue<T> : IScopedValue<T>
 	/// </summary>
 	/// <param name="value">Value</param>
 	/// <param name="disposeAction">Action to perform on dispose</param>
-	public ScopedValue(T value, Action<T> disposeAction)
+	public AsyncScopedValue(T value, Func<T, ValueTask> disposeAction)
 	{
 		Value = value;
 		_disposeAction = disposeAction;
@@ -31,7 +31,7 @@ public class ScopedValue<T> : IScopedValue<T>
 	/// </summary>
 	/// <param name="value">Value</param>
 	/// <param name="scope">Disposable scope</param>
-	public ScopedValue(T value, IDisposable scope)
+	public AsyncScopedValue(T value, IDisposable scope)
 	{
 		Value = value;
 		_disposable = scope;
@@ -63,8 +63,13 @@ public class ScopedValue<T> : IScopedValue<T>
 		}
 
 		_disposed = true;
-
-		ExecutionHelpers.Try(() => _disposeAction?.Invoke(Value));
+		try
+		{
+			if (_disposeAction != null)
+			{
+				await _disposeAction.Invoke(Value).ConfigureAwait(false);
+			}
+		} catch (Exception ex) {}
 
 		try
 		{
@@ -88,7 +93,7 @@ public class ScopedValue<T> : IScopedValue<T>
 	}
 
 	/// <inheritdoc />
-	~ScopedValue() => Dispose(false).GetAwaiter().GetResult();
+	~AsyncScopedValue() => Dispose(false).GetAwaiter().GetResult();
 
 	/// <inheritdoc />
 	public ValueTask DisposeAsync() => Dispose(true);
